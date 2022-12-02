@@ -73,10 +73,10 @@ def listen(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host,port))
         s.listen()
-        conn, addr = s.accept()
-        with conn:
-            print(f'Recieved connection from {addr}')
-            while True:
+        while True:
+            conn, addr = s.accept()
+            with conn:
+                print(f'Recieved connection from {addr}')
                 child = ChildThread(conn)
                 child.start()
 
