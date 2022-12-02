@@ -13,27 +13,32 @@
 import sys
 import getopt
 import random
+import socket
+import os
 
 #Main Function
 if __name__ == "__main__":
     
     argv = sys.argv[1:]
-    try:
-        opts, args = getopt.getopt(argv, "c:")
-    except:
-        print("Error")
+    if(len(argv) == 0):
+        print("Error, no URL Specified")
+        exit()
+
+    #Set Chainfile
+    if('-c' in argv):
+        chainfile = argv[argv.index('-c') + 1]
+        print(chainfile)
+    else:
+        if not any(fname == 'chaingang.txt' for fname in os.listdir('.')):
+            print("No default chaingang file found")
+            exit()
+        else:
+            chainfile = "chaingang.txt"
 
     #Set URL
     URL = argv[0]
 
-    #Set Chain File
-    for opt, arg in opts:
-        if opt in ['-c']:
-            chainfile = "chaingang.txt"
-        else:
-            chainfile = "chaingang.txt"
-
-    f = open("chaingang.txt", "r")
+    f = open(chainfile, "r")
     if(f.readable()):
         ipList = f.readlines()
 
@@ -55,10 +60,28 @@ if __name__ == "__main__":
         ipList.pop(index)
     else:
         print("Error: File Unreadable")
-        return
-    print(URL)
-    print(ipList)
-    print(firstIP)
-    print(firstPort)
-        
+        exit()
+
+    #Make tuple to encode
+    newipList = []
+    for index in ipList:
+        split = index.split()
+        index = (split[0], int(split[1]))
+        newipList.append(index)
+
+    ipList = newipList
+    listToEncode = [URL, ipList]
+
+    #encodedTuple = tupleToEncode.toString().encode()
+    #print(encodedTuple)
+    encodedList = str(listToEncode).encode()
+    print(encodedList)
+
+    clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    clientSocket.connect((firstIP, int(firstPort)))
+    clientSocket.send(encodedList)
+
+
+
+
     f.close()
