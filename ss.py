@@ -16,8 +16,7 @@ import argparse
 import sys
 import socket
 import random
-import ast
-import json
+import requests
 
 '''
 --Child Thread--
@@ -46,19 +45,21 @@ class ChildThread(Thread):
     def intermediate(self):
         print('Intermediate SS')
         index = random.randint(0, len(self.ss_list) - 1)
-        newIP = self.ss_list[index][0]
-        newPort = self.ss_list[index][1]
-        self.ss_list.pop(index)
-        encodedList = str([self.url, self.ss_list]).encode()
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as SSSocket:
-            SSSocket.connect((newIP, int(newPort)))
-            SSSocket.send(encodedList)
-            with open(file, 'wb') as f:   
-                chunk = SSSocket.recv(1024)
-                while chunk:
+        newIP = ss_list[index][0]
+        newPort = ss_list[index][1]
+        ss_list.pop(index)
+        SSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        SSSocket.connect((newIP, int(newPort)))
+        SSSocket.send(encodedList)
+        
+    def download_file(url):
+        local_filename = url.split('/')[-1]
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(local_filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-                    chunk = SSSocket.recv(1024)
-            
+        return local_filename
 
     def send(file):
         with open(file, 'rb') as f:
@@ -67,8 +68,12 @@ class ChildThread(Thread):
                 self.conn.sendall(chunk)
                 chunk = f.read(1024)
 
-            SSSocket.close()
-
+    '''
+    use wget to retrieve file from URL
+    transmit the file back to the previous SS
+    shut down connection
+    erase the local copy of the file
+    '''
     def end(self):
         print('End SS')
         filename = download_file(self.url)
@@ -76,10 +81,6 @@ class ChildThread(Thread):
 
     def run(self):
         print('--Running child thread--')
-        data = self.conn.recv(1024).decode()
-        data = ast.literal_eval(data)
-        self.url = data[0]
-        self.ss_list = data[1]
         print('URL: ', self.url)
         print('SS List: ', self.ss_list)
         if not self.ss_list:
