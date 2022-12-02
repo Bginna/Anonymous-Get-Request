@@ -37,8 +37,8 @@ class ChildThread(Thread):
     def __init__(self, conn):
         Thread.__init__(self)
         self.conn = conn
-        self.url = None # recv url
-        self.ss_list = None # recv ss_list
+        self.url = None
+        self.ss_list = None
 
     def intermediate(self):
         print('Intermediate SS')
@@ -48,6 +48,8 @@ class ChildThread(Thread):
 
     def run(self):
         print('--Running child thread--')
+        data = conn.recv(1024)
+        print(data)
         print('URL: ', self.url)
         print('SS List: ', self.ss_list)
         if not self.ss_list:
