@@ -78,6 +78,7 @@ class ChildThread(Thread):
         print('End SS')
         filename = download_file(self.url)
         self.send(filename)
+        os.remove(filename)
 
     def run(self):
         print('--Running child thread--')
@@ -95,7 +96,6 @@ def listen(port):
         s.bind((host,int(port)))
         s.listen()
         while True:
-
             conn, addr = s.accept()
             with conn:
                 print(f'Recieved connection from {addr}')
