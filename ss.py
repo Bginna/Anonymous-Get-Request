@@ -68,8 +68,15 @@ class ChildThread(Thread):
 def listen(port):
     host = socket.gethostname()
     print(f'stepping stone listening on {host}:{port}')
-    with socket.socket(socket.AF_INET, sock.SOCK_STREAM) as s:
-        s.bind(())
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((host,port))
+        s.listen()
+        conn, addr = s.accept()
+        with conn:
+            print(f'Recieved connection from {addr}')
+            while True:
+                child = ChildThread(conn)
+                child.start()
 
 '''
 --Main Thread--
