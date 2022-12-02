@@ -71,7 +71,7 @@ def listen(port):
     host = socket.gethostname()
     print(f'stepping stone listening on {host}:{port}')
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((host,port))
+        s.bind((host,int(port)))
         s.listen()
         while True:
             conn, addr = s.accept()
