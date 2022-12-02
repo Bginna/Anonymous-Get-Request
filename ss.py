@@ -38,8 +38,8 @@ class ChildThread(Thread):
     def __init__(self, conn):
         Thread.__init__(self)
         self.conn = conn
-        self.url = None # recv url
-        self.ss_list = None # recv ss_list
+        self.url = None
+        self.ss_list = None
 
     def intermediate(self):
         print('Intermediate SS')
@@ -58,6 +58,8 @@ class ChildThread(Thread):
 
     def run(self):
         print('--Running child thread--')
+        data = conn.recv(1024)
+        print(data)
         print('URL: ', self.url)
         print('SS List: ', self.ss_list)
         if not self.ss_list:
@@ -69,12 +71,12 @@ def listen(port):
     host = socket.gethostname()
     print(f'stepping stone listening on {host}:{port}')
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((host,port))
+        s.bind((host,int(port)))
         s.listen()
-        conn, addr = s.accept()
-        with conn:
-            print(f'Recieved connection from {addr}')
-            while True:
+        while True:
+            conn, addr = s.accept()
+            with conn:
+                print(f'Recieved connection from {addr}')
                 child = ChildThread(conn)
                 child.start()
 
