@@ -16,12 +16,8 @@ import argparse
 import sys
 import socket
 import random
-<<<<<<< HEAD
 import ast
 import json
-=======
-import requests
->>>>>>> a1fb121f0abefa50c6670edbbe069b3a001044d0
 
 '''
 --Child Thread--
@@ -71,17 +67,8 @@ class ChildThread(Thread):
                 self.conn.sendall(chunk)
                 chunk = f.read(1024)
 
-<<<<<<< HEAD
             SSSocket.close()
 
-=======
-    '''
-    use wget to retrieve file from URL
-    transmit the file back to the previous SS
-    shut down connection
-    erase the local copy of the file
-    '''
->>>>>>> a1fb121f0abefa50c6670edbbe069b3a001044d0
     def end(self):
         print('End SS')
         filename = download_file(self.url)
@@ -89,13 +76,10 @@ class ChildThread(Thread):
 
     def run(self):
         print('--Running child thread--')
-<<<<<<< HEAD
         data = self.conn.recv(1024).decode()
         data = ast.literal_eval(data)
         self.url = data[0]
         self.ss_list = data[1]
-=======
->>>>>>> a1fb121f0abefa50c6670edbbe069b3a001044d0
         print('URL: ', self.url)
         print('SS List: ', self.ss_list)
         if not self.ss_list:
