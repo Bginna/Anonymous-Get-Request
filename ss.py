@@ -12,8 +12,9 @@
 
 import threading
 from threading import Thread
-import getopt
+import argparse
 import sys
+import socket
 
 '''
 --Child Thread--
@@ -54,6 +55,12 @@ class ChildThread(Thread):
         else:
             self.intermediate()
 
+def listen(port):
+    host = socket.gethostname()
+    print(f'stepping stone listening on {host}:{port}')
+    with socket.socket(socket.AF_INET, sock.SOCK_STREAM) as s:
+        s.bind(())
+
 '''
 --Main Thread--
 get listen port from optional arg
@@ -63,9 +70,13 @@ loop and listen for incoming connections
 accept connections and spawn thread for each new connection
 '''
 def main():
-    args = sys.argv[1:]
-    optlist, args = getopt.getopt(args, 'c:')
-    print(optlist)
+    parser = argparse.ArgumentParser(
+        prog = 'ss.py',
+        description = 'Intermediate stepping stone for anonymous web get'
+    )
+    parser.add_argument('-p', '--port', default=2100)
+    args = parser.parse_args()
+    listen(args.port)
 
 if __name__ == "__main__":
     main()
