@@ -15,6 +15,7 @@ from threading import Thread
 import argparse
 import sys
 import socket
+import random
 
 '''
 --Child Thread--
@@ -42,6 +43,15 @@ class ChildThread(Thread):
 
     def intermediate(self):
         print('Intermediate SS')
+        index = random.randint(0, len(self.ss_list) - 1)
+        newIP = ss_list[index][0]
+        newPort = ss_list[index][1]
+        ss_list.pop(index)
+        SSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        SSSocket.connect((newIP, int(newPort)))
+        SSSocket.send(encodedList)
+        
+
 
     def end(self):
         print('End SS')

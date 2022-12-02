@@ -15,28 +15,32 @@ import getopt
 import random
 import socket
 import os
+import argparse
 
 #Main Function
 if __name__ == "__main__":
     
     argv = sys.argv[1:]
-    if(len(argv) == 0):
-        print("Error, no URL Specified")
-        exit()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('URL')
+    parser.add_argument('-c', default=0)
+    args = parser.parse_args()
 
-    #Set Chainfile
-    if('-c' in argv):
-        chainfile = argv[argv.index('-c') + 1]
-        print(chainfile)
-    else:
+    URL = args.URL
+
+    if(args.c == 0):
         if not any(fname == 'chaingang.txt' for fname in os.listdir('.')):
             print("No default chaingang file found")
             exit()
         else:
             chainfile = "chaingang.txt"
+    else:
+        chainfile = args.c
 
-    #Set URL
-    URL = argv[0]
+
+
+
+
 
     f = open(chainfile, "r")
     if(f.readable()):
@@ -50,7 +54,7 @@ if __name__ == "__main__":
             ipList[index] = ipList[index][:-1]
 
         #Random IP first
-        index = random.randint(1, int(length) - 1)
+        index = random.randint(0, int(length) - 1)
         firstStone = ipList[index]
         x = firstStone.split(" ")
         firstIP = x[0]
@@ -71,9 +75,8 @@ if __name__ == "__main__":
 
     ipList = newipList
     listToEncode = [URL, ipList]
+    print(ipList)
 
-    #encodedTuple = tupleToEncode.toString().encode()
-    #print(encodedTuple)
     encodedList = str(listToEncode).encode()
     print(encodedList)
 
