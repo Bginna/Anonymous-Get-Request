@@ -14,6 +14,7 @@ import sys
 import getopt
 import random
 import socket
+import os
 
 #Main Function
 if __name__ == "__main__":
@@ -28,7 +29,11 @@ if __name__ == "__main__":
         chainfile = argv[argv.index('-c') + 1]
         print(chainfile)
     else:
-        chainfile = "chaingang.txt"
+        if not any(fname == 'chaingang.txt' for fname in os.listdir('.')):
+            print("No default chaingang file found")
+            exit()
+        else:
+            chainfile = "chaingang.txt"
 
     #Set URL
     URL = argv[0]
@@ -73,10 +78,10 @@ if __name__ == "__main__":
     print(encodedList)
 
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    clientSocket.connect(firstIP, firstPort)
+    clientSocket.connect((firstIP, int(firstPort)))
     clientSocket.send(encodedList)
 
-    
+
 
 
     f.close()
