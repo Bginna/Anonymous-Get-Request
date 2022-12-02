@@ -16,6 +16,7 @@ import argparse
 import sys
 import socket
 import random
+import requests
 
 '''
 --Child Thread--
@@ -51,15 +52,35 @@ class ChildThread(Thread):
         SSSocket.connect((newIP, int(newPort)))
         SSSocket.send(encodedList)
         
+    def download_file(url):
+        local_filename = url.split('/')[-1]
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(local_filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        return local_filename
 
+    def send(file):
+        with open(file, 'rb') as f:
+            chunk = f.read(1024)
+            while chunk:
+                self.conn.sendall(chunk)
+                chunk = f.read(1024)
 
+    '''
+    use wget to retrieve file from URL
+    transmit the file back to the previous SS
+    shut down connection
+    erase the local copy of the file
+    '''
     def end(self):
         print('End SS')
+        filename = download_file(self.url)
+        self.send(filename)
 
     def run(self):
         print('--Running child thread--')
-        data = conn.recv(1024)
-        print(data)
         print('URL: ', self.url)
         print('SS List: ', self.ss_list)
         if not self.ss_list:
@@ -74,6 +95,7 @@ def listen(port):
         s.bind((host,int(port)))
         s.listen()
         while True:
+
             conn, addr = s.accept()
             with conn:
                 print(f'Recieved connection from {addr}')
