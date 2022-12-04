@@ -11,12 +11,12 @@
 ###############################################
 
 import threading
-from threading import Thread
 import argparse
 import sys
 import socket
 import random
 import requests
+import ast
 
 '''
 --Child Thread--
@@ -35,23 +35,43 @@ else:
     tear down connection
     erase local copy
 '''
-class ChildThread(Thread):
+class ChildThread(threading.Thread):
     def __init__(self, conn):
-        Thread.__init__(self)
+        threading.Thread.__init__(self)
         self.conn = conn
         self.url = None
         self.ss_list = None
 
-    def intermediate(self):
-        print('Intermediate SS')
+    def select_next_ss(self):
         index = random.randint(0, len(self.ss_list) - 1)
         newIP = ss_list[index][0]
         newPort = ss_list[index][1]
         ss_list.pop(index)
-        SSSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        SSSocket.connect((newIP, int(newPort)))
-        SSSocket.send(encodedList)
-        
+        return newIP, newPort
+
+    def encode_config(self):
+        return str([self.url, self.ss_list]).encode()
+
+    def decode_config(self):
+        self.url = data[0]
+        self.ss_list = data[1]
+
+    def recv_file(self, sock):
+        filename = 'TEMP_' + str(hash(sock))
+        with open(filename, 'wb') as f:
+            chunk = sock.recv(1024)
+            while chunk:
+                f.write(chunk)
+                chunk = sock.recv(1024)
+        return filename
+
+    def send_file(file):
+        with open(file, 'rb') as f:
+            chunk = f.read(1024)
+            while chunk:
+                self.conn.sendall(chunk)
+                chunk = f.read(1024)
+    
     def download_file(url):
         local_filename = url.split('/')[-1]
         with requests.get(url, stream=True) as r:
@@ -61,12 +81,26 @@ class ChildThread(Thread):
                     f.write(chunk)
         return local_filename
 
-    def send(file):
-        with open(file, 'rb') as f:
-            chunk = f.read(1024)
-            while chunk:
-                self.conn.sendall(chunk)
-                chunk = f.read(1024)
+    '''
+    select random SS from list
+    remove current SS from list
+    send URL and SS list to the next SS
+    wait until file is recieved from next SS
+    transmit file to prev SS
+    tear down connection
+    erase local copy
+    '''
+    def intermediate(self):
+        print('Intermediate SS')
+        next_ip, next_port = select_next_ss()
+        filename = ''
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((next_ip,  next_port))
+            s.sendall(self.encode_config())
+            filename = self.recv_file(s)
+        self.send_file(filename)
+        os.remove(filename)
+        self.conn.close()
 
     '''
     use wget to retrieve file from URL
@@ -77,11 +111,21 @@ class ChildThread(Thread):
     def end(self):
         print('End SS')
         filename = download_file(self.url)
-        self.send(filename)
+        self.send_file(filename)
         os.remove(filename)
+        self.conn.close()
+
+    def resolve_request(self):
+        chunk = self.conn.recv(1024)
+        while chunk:
+            data += chunk
+            chunk = self.conn.recv(1024)
+        data = ast.literal_eval(data.decode())
+        self.decode_config(data)
 
     def run(self):
         print('--Running child thread--')
+        self.resolve_request()
         print('URL: ', self.url)
         print('SS List: ', self.ss_list)
         if not self.ss_list:
