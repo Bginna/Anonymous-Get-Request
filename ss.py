@@ -17,6 +17,7 @@ import socket
 import random
 import requests
 import ast
+import os
 
 '''
 --Child Thread--
@@ -46,6 +47,7 @@ class ChildThread(threading.Thread):
         index = random.randint(0, len(self.ss_list) - 1)
         newIP = self.ss_list[index][0]
         newPort = self.ss_list[index][1]
+        print(self.ss_list)
         self.ss_list.pop(index)
         return newIP, newPort
 
@@ -61,18 +63,20 @@ class ChildThread(threading.Thread):
                 chunk = sock.recv(1024)
         return filename
 
-    def send_file(file):
+    def send_file(self, file):
         with open(file, 'rb') as f:
             chunk = f.read(1024)
             while chunk:
                 self.conn.sendall(chunk)
                 chunk = f.read(1024)
     
-    def download_file(url):
+    def download_file(self, url):
+        url = url if url.startswith('http') else ('http://' + url)
+        print(url)
         local_filename = url.split('/')[-1]
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
-            with open(local_filename, 'wb') as f:
+            with open(local_filename, 'w+b') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
         return local_filename
@@ -88,14 +92,16 @@ class ChildThread(threading.Thread):
     '''
     def intermediate(self):
         print('Intermediate SS')
-        next_ip, next_port = self.select_next_ss(self)
+        next_ip, next_port = self.select_next_ss()
         filename = ''
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((next_ip,  next_port))
-            s.sendall(self.encode_config())
+            s.connect((next_ip,  int(next_port)))
+            s.send(self.encode_config())
+            print("Config Sent")
             filename = self.recv_file(s)
+            print("File Received")
         self.send_file(filename)
-        self.os.remove(filename)
+        os.remove(filename)
         self.conn.close()
 
     '''
@@ -107,17 +113,16 @@ class ChildThread(threading.Thread):
     def end(self):
         print('End SS')
         filename = self.download_file(self.url)
+        print("File Downloaded")
         self.send_file(filename)
-        self.os.remove(filename)
+        os.remove(filename)
         self.conn.close()
 
     def resolve_request(self):
-        chunk = self.conn.recv(1024)
-        self.data = b""
-        while chunk:
-            self.data += chunk
-            chunk = self.conn.recv(1024)
-        self.data = ast.literal_eval(self.data.decode())
+        print("resolving")
+        self.data = self.conn.recv(4096).decode()
+        self.data = ast.literal_eval(self.data)
+        print(self.data)
         self.url = self.data[0]
         self.ss_list = self.data[1]
 
@@ -138,11 +143,16 @@ def listen(port):
         s.bind((host,int(port)))
         s.listen()
         while True:
-            conn, addr = s.accept()
-            with conn:
+            try:
+
+                conn, addr = s.accept()
                 print(f'Recieved connection from {addr}')
                 child = ChildThread(conn)
                 child.start()
+            except KeyboardInterrupt:
+                print("\nGoodbye")
+                s.close()
+                break
 
 '''
 --Main Thread--

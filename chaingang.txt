@@ -1,5 +1,5 @@
-4
-lotus 2107
-bismarck 2107
-denver 2107
-richmond 2107
+1
+santa-fe 30000
+richmond 30000
+austin 30000
+mary-jane 30000
