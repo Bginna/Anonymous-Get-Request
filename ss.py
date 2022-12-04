@@ -44,17 +44,13 @@ class ChildThread(threading.Thread):
 
     def select_next_ss(self):
         index = random.randint(0, len(self.ss_list) - 1)
-        newIP = ss_list[index][0]
-        newPort = ss_list[index][1]
-        ss_list.pop(index)
+        newIP = self.ss_list[index][0]
+        newPort = self.ss_list[index][1]
+        self.ss_list.pop(index)
         return newIP, newPort
 
     def encode_config(self):
         return str([self.url, self.ss_list]).encode()
-
-    def decode_config(self):
-        self.url = data[0]
-        self.ss_list = data[1]
 
     def recv_file(self, sock):
         filename = 'TEMP_' + str(hash(sock))
@@ -92,14 +88,14 @@ class ChildThread(threading.Thread):
     '''
     def intermediate(self):
         print('Intermediate SS')
-        next_ip, next_port = select_next_ss()
+        next_ip, next_port = self.select_next_ss(self)
         filename = ''
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((next_ip,  next_port))
             s.sendall(self.encode_config())
             filename = self.recv_file(s)
         self.send_file(filename)
-        os.remove(filename)
+        self.os.remove(filename)
         self.conn.close()
 
     '''
@@ -110,18 +106,20 @@ class ChildThread(threading.Thread):
     '''
     def end(self):
         print('End SS')
-        filename = download_file(self.url)
+        filename = self.download_file(self.url)
         self.send_file(filename)
-        os.remove(filename)
+        self.os.remove(filename)
         self.conn.close()
 
     def resolve_request(self):
         chunk = self.conn.recv(1024)
+        self.data = b""
         while chunk:
-            data += chunk
+            self.data += chunk
             chunk = self.conn.recv(1024)
-        data = ast.literal_eval(data.decode())
-        self.decode_config(data)
+        self.data = ast.literal_eval(self.data.decode())
+        self.url = self.data[0]
+        self.ss_list = self.data[1]
 
     def run(self):
         print('--Running child thread--')

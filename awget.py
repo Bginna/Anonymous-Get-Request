@@ -60,7 +60,12 @@ def main():
         print("ERROR: chainfile not found")
         return
     ss_list = parse_chainfile(chainfile)
-    first_ss = ss_list[random.randint(0, len(ss_list)-1)]
+    first_ss = ss_list.pop(random.randint(0, len(ss_list)-1))
+    print(first_ss)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((first_ss[0],  int(first_ss[1])))
+            s.sendall(str(ss_list).encode())
+
     
     
 
